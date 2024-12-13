@@ -1,26 +1,25 @@
-// script.js
-document.getElementById("send-button").addEventListener("click", async () => {
+document.getElementById("send-button").addEventListener("click", async function () {
     const userInput = document.getElementById("user-input").value;
-    if (userInput.trim() !== "") {
-        // Display user's input
-        const chatOutput = document.getElementById("chat-output");
-        chatOutput.innerHTML += `<div><strong>You:</strong> ${userInput}</div>`;
+    if (!userInput) return;
 
-        // Send user input to the server for GPT-3 processing
-        const response = await fetch("/chat", {
+    // Display user input in chat output
+    const chatOutput = document.getElementById("chat-output");
+    chatOutput.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
+
+    // Send the input to the server and get the response
+    try {
+        const response = await fetch("/api/chat", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ userInput })
+            body: JSON.stringify({ message: userInput }),
         });
 
         const data = await response.json();
-        const botMessage = data.botReply;
-
-        // Display the chatbot's reply
-        chatOutput.innerHTML += `<div><strong>Bot:</strong> ${botMessage}</div>`;
-        document.getElementById("user-input").value = ''; // Clear input
-        chatOutput.scrollTop = chatOutput.scrollHeight; // Scroll to the bottom
+        chatOutput.innerHTML += `<p><strong>ChatGPT:</strong> ${data.reply}</p>`;
+    } catch (error) {
+        console.error("Error:", error);
+        chatOutput.innerHTML += `<p><strong>Error:</strong> Something went wrong!</p>`;
     }
 });

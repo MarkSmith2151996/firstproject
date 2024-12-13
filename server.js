@@ -1,51 +1,41 @@
-// server.js
 const express = require("express");
-const fetch = require("node-fetch");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const { Configuration, OpenAIApi } = require("openai");
+require("dotenv").config();
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
 const app = express();
 const port = 3000;
 
-app.use(express.static("public")); // Serve static files (e.g., HTML, CSS, JS)
-app.use(express.json()); // Middleware to parse JSON bodies
+// Middleware
+app.use(bodyParser.json());
+app.use(cors());
 
-// Define OpenAI API key and endpoint
-const OPENAI_API_KEY = "your-openai-api-key"; // Replace with your OpenAI API key
-const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+// Configure OpenAI API
+const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 
-// Endpoint to handle chat
-app.post("/chat", async (req, res) => {
-    const userInput = req.body.userInput;
-    
-    // Request body for OpenAI's API
-    const requestBody = {
-        model: "gpt-3.5-turbo", // You can choose a different model if needed
-        messages: [
-            { role: "system", content: "You are a helpful assistant." },
-            { role: "user", content: userInput }
-        ]
-    };
+// API endpoint
+app.post("/api/chat", async (req, res) => {
+    const { message } = req.body;
 
     try {
-        const response = await fetch(OPENAI_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${OPENAI_API_KEY}`
-            },
-            body: JSON.stringify(requestBody)
+        const response = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo", // or "gpt-4"
+            messages: [{ role: "user", content: message }],
         });
 
-        const data = await response.json();
-        const botReply = data.choices[0].message.content;
-
-        // Send the bot's reply to the front-end
-        res.json({ botReply });
+        const reply = response.data.choices[0].message.content;
+        res.json({ reply });
     } catch (error) {
-        console.error("Error with OpenAI API:", error);
-        res.status(500).send("Internal Server Error");
+        console.error(error);
+        res.status(500).send("Error processing request");
     }
 });
 
-// Start the server
 app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+    console.log(`Server running at http://localhost:${port}`);
 });
