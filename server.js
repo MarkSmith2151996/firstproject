@@ -3,7 +3,6 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const { Configuration, OpenAIApi } = require("openai");
 require("dotenv").config();
-const OPEN
 
 const app = express();
 const port = 3000;
@@ -18,24 +17,25 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-// API endpoint
+// API Endpoint
 app.post("/api/chat", async (req, res) => {
     const { message } = req.body;
 
     try {
         const response = await openai.createChatCompletion({
-            model: "gpt-3.5-turbo", // or "gpt-4"
+            model: "gpt-3.5-turbo",
             messages: [{ role: "user", content: message }],
         });
 
-        const reply = response.data.choices[0].message.content;
-        res.json({ reply });
+        const reply = response.data.choices[0]?.message?.content || "No response from OpenAI.";
+        res.json({ botReply: reply });
     } catch (error) {
-        console.error(error);
+        console.error("Error from OpenAI API:", error);
         res.status(500).send("Error processing request");
     }
 });
 
+// Start server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });

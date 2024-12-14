@@ -1,47 +1,30 @@
 document.getElementById("send-button").addEventListener("click", async function () {
-    const userInputElement = document.getElementById("user-input");
-    const chatOutput = document.getElementById("chat-output");
-    const userInput = userInputElement.value.trim();
-
+    const userInput = document.getElementById("user-input").value.trim();
     if (!userInput) return;
 
-    // Safely add user message
-    const addMessage = (role, message) => {
-        const messageElement = document.createElement("div");
-        messageElement.innerHTML = `<strong>${role}:</strong> ${escapeHtml(message)}`;
-        chatOutput.appendChild(messageElement);
-        chatOutput.scrollTop = chatOutput.scrollHeight;
-    };
-
-    addMessage("You", userInput);
+    const chatOutput = document.getElementById("chat-output");
+    chatOutput.innerHTML += `<div><strong>You:</strong> ${userInput}</div>`;
 
     try {
-        const response = await fetch("/chat", {
+        const response = await fetch("/api/chat", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userInput }),
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message: userInput }),
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error("Failed to connect to the server.");
         }
 
         const data = await response.json();
-        addMessage("Bot", data.botReply);
+        chatOutput.innerHTML += `<div><strong>Bot:</strong> ${data.botReply}</div>`;
     } catch (error) {
         console.error("Error:", error);
-        addMessage("Error", error.message || "Something went wrong!");
+        chatOutput.innerHTML += `<div><strong>Error:</strong> ${error.message || "Something went wrong!"}</div>`;
     } finally {
-        userInputElement.value = "";
+        document.getElementById("user-input").value = '';
+        chatOutput.scrollTop = chatOutput.scrollHeight;
     }
 });
-
-// Helper function to escape HTML to prevent XSS
-function escapeHtml(unsafe) {
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
